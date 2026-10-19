@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FX Strength</title>
+<style>
+  :root { --bg:#0f1419; --card:#1a2129; --text:#e8edf2; --mute:#8b97a3;
+          --good:#2ecc71; --bad:#e74c3c; --mid:#f1c40f; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f4f6f8; --card:#fff; --text:#1a2129; --mute:#66727e; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:16px; background:var(--bg); color:var(--text);
+         font:15px/1.4 system-ui,sans-serif; max-width:720px; margin-inline:auto; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:var(--mute); font-size:13px; margin-bottom:14px; }
+  .idea { background:var(--card); border-radius:10px; padding:12px; margin-bottom:14px; }
+  .card { background:var(--card); border-radius:10px; padding:12px; margin-bottom:10px; }
+  .row { display:flex; justify-content:space-between; align-items:center; }
+  .ccy { font-size:18px; font-weight:700; }
+  .tag { font-size:12px; font-weight:700; padding:2px 8px; border-radius:20px; color:#fff; }
+  .STRONG { background:var(--good); } .WEAK { background:var(--bad); }
+  .NEUTRAL { background:var(--mid); color:#222; }
+  .total { font-size:18px; font-weight:700; }
+  .pillars { margin-top:8px; display:grid; gap:4px; }
+  .p { display:grid; grid-template-columns:110px 1fr 40px; gap:8px; align-items:center;
+       font-size:12px; color:var(--mute); }
+  .bar { height:6px; background:#8883; border-radius:3px; position:relative; }
+  .bar i { position:absolute; top:0; bottom:0; border-radius:3px; }
+  .bar b { position:absolute; left:50%; top:-2px; bottom:-2px; width:1px; background:var(--mute); }
+  small { color:var(--mute); }
+  h2 { font-size:17px; margin:22px 0 8px; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .chip { border:0; border-radius:20px; padding:6px 12px; font-size:13px;
+          background:var(--card); color:var(--text); cursor:pointer; }
+  .chip.on { background:#3b82f6; color:#fff; }
+  .ev { background:var(--card); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  .ev .t { font-weight:600; }
+  .ev .m { color:var(--mute); font-size:12px; margin-top:2px; }
+  .imp { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .imp.High { background:var(--bad); } .imp.Medium { background:var(--mid); }
+  .exp-improving { color:var(--good); } .exp-weakening { color:var(--bad); }
+  .past { opacity:.55; }
+</style>
+</head>
+<body>
+<h1>FX Currency Strength</h1>
+<div class="sub" id="meta">Loading…</div>
+<div class="idea" id="idea"></div>
+<div id="list"></div>
+
+<h2>Key economic events</h2>
+<div class="chips" id="chips"></div>
+<div id="events"></div>
+
+<p><small>Scores are z-scores across the 8 currencies (positive = stronger).
+Educational tool, not financial advice.</small></p>
+
+<script>
+const NAMES = {growth:"Growth", inflation:"Inflation", monetary_policy:"Monetary policy",
+               geopolitics:"Geopolitics", market_risk:"Market risk"};
+
+const CATS = {all:"All", central_bank:"Central banks", employment:"Employment",
+              inflation:"Inflation", growth:"Growth & activity"};
+let EVENTS = [], CAT = "all";
+
+function renderEvents() {
+  document.getElementById("chips").innerHTML = Object.entries(CATS).map(([k, v]) =>
+    `<button class="chip ${k === CAT ? "on" : ""}" onclick="CAT='${k}';renderEvents()">${v}</button>`
+  ).join("");
+  const now = Date.now();
+  const list = EVENTS.filter(e => CAT === "all" || e.category === CAT);
+  document.getElementById("events").innerHTML = list.length ? list.map(e => {
+    const t = new Date(e.date_utc), past = t < now;
+    return `<div class="ev ${past ? "past" : ""}">
+      <div class="t"><span class="imp ${e.impact}"></span>${e.currency} · ${e.title}</div>
+      <div class="m">${t.toLocaleString([], {weekday:"short", day:"numeric", month:"short",
+        hour:"2-digit", minute:"2-digit"})} · ${CATS[e.category]} ·
+        Forecast ${e.forecast || "–"} / Previous ${e.previous || "–"}
+        <span class="exp-${e.expectati
